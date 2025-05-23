@@ -1,0 +1,7 @@
+dependencies:
+  mobx: ^2.3.0
+  flutter_mobx: ^2.2.0
+
+dev_dependencies:
+  build_runner: ^2.4.8
+  mobx_codegen: ^2.6.0

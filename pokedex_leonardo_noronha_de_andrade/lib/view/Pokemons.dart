@@ -1,225 +1,191 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter_mobx/flutter_mobx.dart';
+import '../theme/app_theme.dart';
+import 'pokemons_store.dart';
+import 'Detalhes.dart';
 
-class Pokemons extends StatefulWidget {
-  @override
-  _PokemonsState createState() => _PokemonsState();
-}
+class ListaPokemons extends StatelessWidget {
+  final PokemonsStore loja = PokemonsStore();
+  final TextEditingController controladorBusca = TextEditingController();
 
-class _PokemonsState extends State<Pokemons> {
-  List<Map<String, dynamic>> pokemons = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchPokemons();
-  }
-
-  Future<void> fetchPokemons() async {
-    try {
-      final url = Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=20');
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List results = data['results'];
-
-        List<Map<String, dynamic>> fetchedPokemons = [];
-        for (var result in results) {
-          final pokemonDetails = await fetchPokemonDetails(result['url']);
-          fetchedPokemons.add(pokemonDetails);
-        }
-
-        setState(() {
-          pokemons = fetchedPokemons;
-          isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load Pokémons');
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Error'),
-              content: Text('Failed to fetch Pokémons: $e'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-      );
-    }
-  }
-
-  Future<Map<String, dynamic>> fetchPokemonDetails(String url) async {
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return {
-        'name': data['name'],
-        'image': data['sprites']['front_default'],
-        'type':
-            (data['types'] as List)
-                .map((typeInfo) => typeInfo['type']['name'])
-                .toList(),
-      };
-    } else {
-      throw Exception('Failed to load Pokémon details');
-    }
+  ListaPokemons({super.key}) {
+    loja.fetchPokemons();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(255, 82, 82, 1),
-        title: const Text('Pokedex'),
+        
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).primaryColor,
+        elevation: 0,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Pokédex',
+                          style: null,
+            ),
+            const SizedBox(width: 8),
+            Image.asset(
+              'lib/assets/pokebola.png',
+              height: 36,
+              width: 36,
+              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+            ),
+          ],
+        ),
         centerTitle: true,
       ),
-      body:
-          isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  // Search bar
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Digite o Pokemon',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 0,
-                                horizontal: 16.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          child: const Text('Buscar'),
-                        ),
-                      ],
+      body: Container(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  // Pokémon grid
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, // 2 items per row
-                              crossAxisSpacing: 8.0,
-                              mainAxisSpacing: 8.0,
-                              childAspectRatio:
-                                  3 / 4, // Adjust the aspect ratio as needed
-                            ),
-                        itemCount: pokemons.length,
-                        itemBuilder: (context, index) {
-                          final pokemon = pokemons[index];
-                          return Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            elevation: 4,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: Image.network(
-                                      pokemon['image'],
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    pokemon['name'],
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children:
-                                        pokemon['type']
-                                            .map<Widget>(
-                                              (type) => Container(
-                                                margin:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 4.0,
-                                                    ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 8.0,
-                                                      vertical: 4.0,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      type == 'grass'
-                                                          ? Colors.green
-                                                          : type == 'poison'
-                                                          ? Colors.purple
-                                                          : type == 'fire'
-                                                          ? Colors.red
-                                                          : Colors.grey,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        8.0,
-                                                      ),
-                                                ),
-                                                child: Text(
-                                                  type,
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(Icons.search, color: Colors.grey),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: controladorBusca,
+                        onSubmitted: (valor) {
+                          loja.definirBusca(valor);
                         },
+                        decoration: const InputDecoration(
+                          hintText: 'Buscar',
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+            ),
+            Expanded(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (scrollInfo) {
+                  if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent &&
+                      loja.hasMore && !loja.isLoading && loja.searchQuery.isEmpty) {
+                    loja.fetchPokemonsImpl(true);
+                  }
+                  return false;
+                },
+                child: Observer(
+                  builder: (_) {
+                    if (loja.isLoading && loja.listaPokemons.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (loja.errorMessage != null && loja.listaPokemons.isEmpty) {
+                      return Center(child: Text(loja.errorMessage!));
+                    }
+                    return GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.7,
+                      ),
+                      itemCount: loja.listaPokemons.length,
+                      itemBuilder: (context, indice) {
+                        final pokemon = loja.listaPokemons[indice];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Detalhes(pokemon: pokemon),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Image.network(
+                                      pokemon['imagem'],
+                                      height: 90,
+                                      width: 90,
+                                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.catching_pokemon, size: 60, color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '#${pokemon['id'] != null ? pokemon['id'].toString().padLeft(3, '0') : ''}',
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Flexible(
+                                  child: Text(
+                                    _capitalizar(pokemon['nome'] ?? pokemon['name'] ?? ''),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 17,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+            if (loja.isLoading && loja.listaPokemons.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+          ],
+        ),
+      ),
     );
+  }
+
+  String _capitalizar(String texto) {
+    if (texto.isEmpty) return texto;
+    return texto[0].toUpperCase() + texto.substring(1);
   }
 }
