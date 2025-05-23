@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import '../theme/app_theme.dart';
-import 'pokemons_store.dart';
+import '../store/pokemons_store.dart';
 import 'Detalhes.dart';
 
 class ListaPokemons extends StatelessWidget {
