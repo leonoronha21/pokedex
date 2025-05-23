@@ -1,6 +1,23 @@
 # Pokédex Flutter - Leonardo Noronha de Andrade
 
-Este é um aplicativo Flutter que utiliza a PokéAPI para exibir uma Pokédex moderna, responsiva e em português, com gerenciamento de estado MobX.
+Este é um aplicativo Flutter que utiliza a PokéAPI(https://pokeapi.co) para exibir uma Pokédex moderna, responsiva, com gerenciamento de estado MobX.
+
+## Pré-requisitos
+
+- **Flutter SDK** (recomendado: versão estável mais recente)
+  - [Instalação do Flutter](https://docs.flutter.dev/get-started/install)
+- **Dart SDK** (já incluso no Flutter)
+- **Git** (para clonar o repositório)
+- **Android Studio, VS Code ou outro editor compatível com Flutter**
+- **Emulador Android/iOS ou dispositivo físico** para rodar o app
+
+### Dependências do projeto
+
+- flutter_mobx
+- mobx
+- build_runner
+- mobx_codegen
+- http
 
 ## Funcionalidades
 
